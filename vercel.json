@@ -3,7 +3,7 @@
   "redirects": [
     {
       "source": "/",
-      "has": [{ "type": "host", "value": "circle-of-fifths.vercel.app" }],
+      "has": [{ "type": "host", "value": "circle-of-fifths-beta.vercel.app" }],
       "destination": "https://fretworks.vercel.app/circle",
       "permanent": true
     }
