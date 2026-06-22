@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "circle-of-fifths.vercel.app" }],
+      "destination": "https://fretworks.vercel.app/circle",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    { "source": "/circle/(.*)", "destination": "/$1" },
+    { "source": "/circle", "destination": "/" }
+  ]
+}
