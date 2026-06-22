@@ -121,7 +121,7 @@ function Wheel({ home, tg }) {
               fill={color} style={{ font: `700 ${g.ring === "outer" ? 15 : 12.5}px var(--font-heading)` }}>{label}</text>
             {showNum && (
               <text x={g.num[0]} y={g.num[1]} textAnchor="middle" dominantBaseline="central"
-                fill={isHome ? INK : "#caa784"} style={{ font: `600 ${g.ring === "outer" ? 9.5 : 8.5}px var(--font-mono)` }}>{ch.roman}</text>
+                fill={isHome ? INK : "#caa784"} style={{ font: `600 ${g.ring === "outer" ? 10 : 9}px var(--font-heading)`, letterSpacing: "-0.02em" }}>{ch.roman}</text>
             )}
           </g>
         );
@@ -512,10 +512,10 @@ const STYLES = `
 .cof-readhead { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:baseline; justify-content:center; }
 .cof-readhead strong { font:600 var(--fs-xl)/1 var(--font-display); color:var(--text-strong); }
 .cof-readhead span { font:500 var(--fs-sm) var(--font-mono); color:var(--muted); }
-.cof-chordline { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:12px; }
-.cof-chip { font:600 12px var(--font-mono); padding:5px 9px; border:1px solid var(--border); border-radius:var(--r-md); background:var(--surface-2); color:var(--text); cursor:pointer; transition:.16s; }
+.cof-chordline { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin-top:12px; }
+.cof-chip { font:600 10.5px var(--font-mono); padding:4px 6px; border:1px solid var(--border); border-radius:var(--r-sm); background:var(--surface-2); color:var(--text); cursor:pointer; transition:.16s; white-space:nowrap; }
 .cof-chip:hover { border-color:var(--accent); }
-.cof-chip b { color:var(--accent); margin-right:5px; }
+.cof-chip b { color:var(--accent); margin-right:3px; }
 .cof-legend { display:flex; align-items:center; gap:8px; justify-content:center; margin-top:12px; color:var(--muted); font:500 12px var(--font-mono); }
 .cof-dash { width:24px; border-top:2px dashed ${TEAL}; display:inline-block; }
 .cof-hint { text-align:center; color:var(--faint); font-size:var(--fs-xs); margin-top:14px; line-height:1.5; }
