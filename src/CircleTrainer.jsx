@@ -21,8 +21,8 @@ const MUTED = "#9a96b0";
 // ── Wheel geometry (viewBox 0 0 360 360, centre 180,180) ─────────────────────
 const C = 180;
 const RINGS = {
-  outer: { rIn: 113, rOut: 179, name: 146, nameOut: 154, num: 121 },
-  inner: { rIn: 47, rOut: 109, name: 78, nameOut: 87, num: 57 },
+  outer: { rIn: 113, rOut: 179, name: 146, nameOut: 154, num: 121, div: 131 },
+  inner: { rIn: 47, rOut: 109, name: 78, nameOut: 87, num: 57, div: 66 },
 };
 const GAP = 1.1; // half-gap (deg) → thin bg spokes between slices
 const rad = (d) => (d * Math.PI) / 180;
@@ -44,7 +44,7 @@ const GEOM = ["outer", "inner"].flatMap((ring) => {
       ring, i, id: ring + i,
       path: sector(R.rIn, R.rOut, a0, a1),
       name: polar(R.name, ctr), nameOut: polar(R.nameOut, ctr), num: polar(R.num, ctr),
-      edge: ring === "outer" ? arc(R.rOut - 1, ctr - 13, ctr + 13) : null,
+      divider: arc(R.div, ctr - 13, ctr + 13),
     };
   });
 });
@@ -111,8 +111,11 @@ function Wheel({ home, tg }) {
         return (
           <g key={g.id} className="cof-slice" data-ring={g.ring} data-i={g.i}>
             <path d={g.path} fill={fill} stroke={SPOKE} strokeWidth="0.5" />
-            {g.edge && accSet.has(g.id) && (
-              <path d={g.edge} fill="none" stroke={TEAL} strokeWidth="2" strokeDasharray="3 3.2" strokeLinecap="round" />
+            {g.ring === "outer" && accSet.has(g.id) && (
+              <path d={g.path} fill="none" stroke={TEAL} strokeWidth="1.5" strokeDasharray="3 3" strokeLinejoin="round" />
+            )}
+            {showNum && (
+              <path d={g.divider} fill="none" stroke={color} strokeWidth="1" opacity="0.55" />
             )}
             <text x={np[0]} y={np[1]} textAnchor="middle" dominantBaseline="central"
               fill={color} style={{ font: `700 ${g.ring === "outer" ? 15 : 12.5}px var(--font-heading)` }}>{label}</text>
