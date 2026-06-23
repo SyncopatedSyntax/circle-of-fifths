@@ -68,9 +68,10 @@ for (let c = 0; c < 12; c++) {
   eq([SIGNATURE[c].count, SIGNATURE[c].type], EXPECTED_SIG[c], `${MAJ[c]}: signature`);
   const acc = accidentalPositions(c);
   ok(acc.length === SIGNATURE[c].count, `${MAJ[c]}: ${acc.length} accidentals want ${SIGNATURE[c].count}`);
-  // each accidental's slice must be the outer slice whose pitch matches the note
+  // each accidental's slice points at the NATURAL note that gets altered (the
+  // "read from the circle" trick), so slice letter must match accidental letter
   acc.forEach((a) =>
-    ok(MAJ_PC[a.index] === notePc(a.name), `${MAJ[c]}: accidental ${a.name} on slice ${a.index} (pc ${MAJ_PC[a.index]})`));
+    ok(MAJ[a.index][0] === a.name[0], `${MAJ[c]}: accidental ${a.name} highlights slice ${a.index} (${MAJ[a.index]})`));
   // the set of accidental notes must equal the scale notes that carry ♯/♭
   const fromScale = new Set(majorScale(c).filter((n) => n.length > 1));
   const fromAcc = new Set(acc.map((a) => a.name));

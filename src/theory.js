@@ -26,11 +26,14 @@ export const SIGNATURE = [
   { count: 2, type: "flat" }, { count: 1, type: "flat" },
 ];
 
-// Order accidentals are added, and which outer-ring slice each lands on (by pitch).
+// Order accidentals are added, and which outer-ring slice to highlight.
+// Slices point at the NATURAL note that gets altered (F→F♯, B→B♭, …) so the
+// wheel visually matches the "read from the circle" trick: start at F clockwise
+// for sharps, start at B counter-clockwise for flats.
 export const SHARP_ORDER = ["F♯", "C♯", "G♯", "D♯", "A♯", "E♯"];
 export const FLAT_ORDER = ["B♭", "E♭", "A♭", "D♭", "G♭", "C♭"];
-const SHARP_SLICES = [6, 7, 8, 9, 10, 11]; // F♯ on its own slice, C♯ on D♭'s, …
-const FLAT_SLICES = [10, 9, 8, 7, 6, 5];   // B♭ on its own slice, E♭ on E♭'s, …
+const SHARP_SLICES = [11, 0, 1, 2, 3, 4]; // F, C, G, D, A, E (natural notes that get ♯)
+const FLAT_SLICES = [5, 4, 3, 2, 1, 0];   // B, E, A, D, G, C (natural notes that get ♭)
 
 // ── Key spelling engine ──────────────────────────────────────────────────────
 const LETTERS = ["C", "D", "E", "F", "G", "A", "B"];

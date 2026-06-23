@@ -173,7 +173,7 @@ function CircleTab({ home, setHome, tg, setTg, audio }) {
             ))}
           </div>
         )}
-        {tg.sharps && <div className="cof-legend"><span className="cof-dash" /> accidental note in this key</div>}
+        {tg.sharps && <div className="cof-legend"><span className="cof-dash" /> note that gets ♯/♭ in this key</div>}
         <div className="cof-hint">Tap a wedge to set its key and hear it · outer ring = major, inner = relative minor.</div>
       </div>
     </div>
@@ -215,12 +215,49 @@ function LearnTab({ home, setHome, audio }) {
       </div>
 
       <div className="cof-card">
-        <h3>Order of sharps &amp; flats</h3>
-        <p>Each new key adds the <b>next</b> accidental in this fixed order — so a key with 3 sharps has the first three.</p>
-        <div className="cof-orderrow"><span className="cof-ordlbl">Sharps</span>
-          {SHARP_ORDER.map((n, k) => <span key={n} className="cof-ordpip" style={{ opacity: 1 - k * 0.1 }}>{n}</span>)}</div>
-        <div className="cof-orderrow"><span className="cof-ordlbl">Flats</span>
-          {FLAT_ORDER.map((n, k) => <span key={n} className="cof-ordpip flat" style={{ opacity: 1 - k * 0.1 }}>{n}</span>)}</div>
+        <h3>Reading sharps &amp; flats from the circle</h3>
+        <p>The circle itself tells you which notes are sharp or flat in any key — no memorising needed.</p>
+
+        <div className="cof-trick">
+          <div className="cof-trick-label">♯ Sharps — start at <b>F</b>, walk clockwise</div>
+          <div className="cof-trick-row">
+            {["F", "C", "G", "D", "A", "E"].map((n, k) => (
+              <span key={n} className="cof-trick-step">
+                <span className="cof-ordpip">{n}</span>
+                <span className="cof-trick-num">{k + 1}♯</span>
+              </span>
+            ))}
+          </div>
+          <p className="cof-trick-ex">
+            <b>D major</b> has 2 sharps → first 2 from F: <span className="cof-ordpip" style={{ fontSize: "11px", padding: "2px 5px" }}>F♯</span>{" "}
+            <span className="cof-ordpip" style={{ fontSize: "11px", padding: "2px 5px" }}>C♯</span>
+          </p>
+        </div>
+
+        <div className="cof-trick">
+          <div className="cof-trick-label">♭ Flats — start at <b>B</b>, walk counter-clockwise</div>
+          <div className="cof-trick-row">
+            {["B", "E", "A", "D", "G", "C"].map((n, k) => (
+              <span key={n} className="cof-trick-step">
+                <span className="cof-ordpip flat">{n}</span>
+                <span className="cof-trick-num">{k + 1}♭</span>
+              </span>
+            ))}
+          </div>
+          <p className="cof-trick-ex">
+            <b>D♭ major</b> has 5 flats → first 5 from B: <span className="cof-ordpip flat" style={{ fontSize: "11px", padding: "2px 5px" }}>B♭</span>{" "}
+            <span className="cof-ordpip flat" style={{ fontSize: "11px", padding: "2px 5px" }}>E♭</span>{" "}
+            <span className="cof-ordpip flat" style={{ fontSize: "11px", padding: "2px 5px" }}>A♭</span>{" "}
+            <span className="cof-ordpip flat" style={{ fontSize: "11px", padding: "2px 5px" }}>D♭</span>{" "}
+            <span className="cof-ordpip flat" style={{ fontSize: "11px", padding: "2px 5px" }}>G♭</span>
+          </p>
+        </div>
+
+        <p className="cof-dim">F and B sit on opposite sides of C — sharps go one way, flats go the other. The circle does the work for you.</p>
+      </div>
+
+      <div className="cof-card">
+        <h3>Reference table</h3>
         <table className="cof-table">
           <thead><tr><th>Key</th><th>Signature</th><th>Sharps / flats</th><th>Rel. minor</th></tr></thead>
           <tbody>{rows.map((r) => (
@@ -529,6 +566,12 @@ const STYLES = `
 .cof-ordlbl { font:700 var(--fs-xs) var(--font-heading); color:var(--muted); width:46px; }
 .cof-ordpip { font:700 13px var(--font-mono); color:var(--accent); background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r-sm); padding:3px 7px; }
 .cof-ordpip.flat { color:${TEAL}; }
+.cof-trick { background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r-md); padding:12px 14px; margin:10px 0; }
+.cof-trick-label { font:700 var(--fs-sm) var(--font-heading); color:var(--text); margin-bottom:8px; }
+.cof-trick-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+.cof-trick-step { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.cof-trick-num { font:600 var(--fs-xs) var(--font-mono); color:var(--muted); }
+.cof-trick-ex { font-size:var(--fs-sm); color:var(--text); margin:0; display:flex; flex-wrap:wrap; align-items:center; gap:4px; }
 .cof-table { width:100%; border-collapse:collapse; margin-top:12px; font-size:var(--fs-sm); }
 .cof-table th { text-align:left; font:700 var(--fs-xs) var(--font-heading); color:var(--muted); padding:6px 8px; border-bottom:1px solid var(--border); }
 .cof-table td { padding:6px 8px; border-bottom:1px solid var(--surface-3); color:var(--text); }

@@ -21,7 +21,10 @@ dev + end user: Zak.
   CSS does not set a global body font, so prose otherwise falls back to serif
   (ChordTrainer does the same on its root). Headings use `--font-heading`
   (Space Grotesk); reserve `--font-mono` for note/numeral *data* (chip notes, the
-  Learn note column, wheel numerals), not for sentences.
+  Learn note column), not for sentences. **Roman numerals on the wheel use
+  `--font-heading`** (not `--font-mono`) — mono's fixed-width "i" was too wide
+  and wasted space in the small inner ring. Chord pills at the bottom use 10.5px
+  with 4px 6px padding to fit all keys single-line at 393px.
 - Tabs: **Learn · Circle · Write · Quiz**.
 
 ## The wheel — locked design choices (mockup v6)
