@@ -82,12 +82,38 @@ function useAudio() {
       o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + dur);
     });
   };
+  const loopRef = useRef(null);
+  const stopLoop = () => { if (loopRef.current) { loopRef.current.stop = true; loopRef.current = null; } };
+  const schedulePass = (c, items, t0, beat) => {
+    let t = t0;
+    items.forEach((it) => {
+      const f = chordFreqs(it.rootPc, it.quality);
+      voice(c, f, t, beat * 1.9);
+      voice(c, f, t + beat, beat * 1.9);
+      t += beat * 2;
+    });
+    return t;
+  };
   return {
-    chord: (pc, q) => { const c = ctx(); voice(c, chordFreqs(pc, q), c.currentTime, 0.75); },
-    sequence: (items) => {
-      const c = ctx(); let t = c.currentTime + 0.05; const step = 0.62;
-      items.forEach((it) => { voice(c, chordFreqs(it.rootPc, it.quality), t, step * 0.95); t += step; });
+    chord: (pc, q) => {
+      const c = ctx(), freqs = chordFreqs(pc, q), t0 = c.currentTime;
+      freqs.forEach((f, i) => voice(c, [f], t0 + i * 0.06, 1.2));
     },
+    sequence: (items, bpm) => { stopLoop(); const c = ctx(); schedulePass(c, items, c.currentTime + 0.05, 60 / bpm); },
+    loop: (items, bpm, onStop) => {
+      stopLoop();
+      const c = ctx(); const beat = 60 / bpm;
+      const handle = { stop: false }; loopRef.current = handle;
+      let next = c.currentTime + 0.05;
+      const tick = () => {
+        if (handle.stop) { onStop(); return; }
+        next = schedulePass(c, items, next, beat);
+        const wait = (next - c.currentTime - 0.1) * 1000;
+        setTimeout(() => tick(), Math.max(wait, 50));
+      };
+      tick();
+    },
+    stopLoop,
   };
 }
 
@@ -323,8 +349,11 @@ function WriteTab({ home, setHome, audio }) {
   const chords = diatonic(home.ring, home.index);
   const byRoman = {}; chords.forEach((ch) => { byRoman[ch.roman] = ch; });
   const [seq, setSeq] = useState([]);
+  const [looping, setLooping] = useState(false);
+  const [bpm, setBpm] = useState(72);
   const templates = home.ring === "minor" ? MIN_TEMPLATES : MAJ_TEMPLATES;
   const loadTemplate = (romans) => setSeq(romans.map((r) => byRoman[r]).filter(Boolean));
+  useEffect(() => { return () => audio.stopLoop(); }, []);
   return (
     <div className="cof-pad">
       <div className="cof-card">
@@ -346,8 +375,12 @@ function WriteTab({ home, setHome, audio }) {
             ))}
         </div>
         <div className="cof-btnrow">
-          <button className="fw-btn fw-btn-primary" disabled={!seq.length} onClick={() => audio.sequence(seq)}>▶ Play</button>
-          <button className="fw-btn fw-btn-ghost" disabled={!seq.length} onClick={() => setSeq([])}>Clear</button>
+          <button className="fw-btn fw-btn-primary" disabled={!seq.length} onClick={() => { setLooping(false); audio.sequence(seq, +bpm || 72); }}>▶ Play</button>
+          <button className="fw-btn fw-btn-primary" disabled={!seq.length} style={looping ? { background: '#ef4444' } : {}} onClick={() => {
+            if (looping) { audio.stopLoop(); setLooping(false); } else { setLooping(true); audio.loop(seq, +bpm || 72, () => setLooping(false)); }
+          }}>{looping ? "■ Stop" : "🔁 Loop"}</button>
+          <button className="fw-btn fw-btn-ghost" disabled={!seq.length} onClick={() => { audio.stopLoop(); setLooping(false); setSeq([]); }}>Clear</button>
+          <label className="cof-bpm"><input type="number" min={40} max={200} value={bpm} onChange={(e) => setBpm(e.target.value)} onBlur={() => { const n = Math.max(40, Math.min(200, +bpm || 72)); setBpm(n); }} /> BPM</label>
         </div>
         <div className="cof-templates">
           {templates.map((t) => <button key={t.name} className="cof-tmpl" onClick={() => loadTemplate(t.romans)}>{t.name}</button>)}
@@ -587,8 +620,11 @@ const STYLES = `
 .cof-seqchip b { color:var(--accent); }
 .cof-seqchip .cof-x { color:var(--faint); margin-left:3px; }
 .cof-seqchip:hover .cof-x { color:#ff6b6b; }
-.cof-btnrow { display:flex; gap:8px; margin:12px 0; }
+.cof-btnrow { display:flex; gap:8px; margin:12px 0; align-items:center; flex-wrap:wrap; }
 .cof-btnrow .fw-btn:disabled { opacity:.4; cursor:not-allowed; }
+.cof-bpm { display:flex; align-items:center; gap:4px; font:600 var(--fs-xs) var(--font-heading); color:var(--muted); margin-left:auto; }
+.cof-bpm input { width:48px; padding:5px 4px; border:1px solid var(--border); border-radius:6px; background:var(--surface-3); color:var(--text-strong); font:700 var(--fs-sm) var(--font-mono); text-align:center; -moz-appearance:textfield; }
+.cof-bpm input::-webkit-inner-spin-button, .cof-bpm input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
 .cof-templates { display:flex; flex-wrap:wrap; gap:7px; }
 .cof-tmpl { font:600 var(--fs-xs) var(--font-body); padding:6px 10px; border:1px solid var(--border); border-radius:var(--r-pill); background:transparent; color:var(--muted); cursor:pointer; transition:.16s; }
 .cof-tmpl:hover { color:var(--accent); border-color:var(--accent); }
