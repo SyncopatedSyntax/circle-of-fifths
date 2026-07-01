@@ -2,8 +2,8 @@
 
 A **pure-theory, interactive Circle of Fifths** for understanding keys/harmony and
 helping with songwriting. The 6th tool in the **Fretworks** toolbox (sibling to
-ChordTrainer, DiatonicChordsTrainer, MelodicMinorTrainer, AlteredTrainer). Single
-dev + end user: Zak.
+ChordTrainer, DiatonicChordsTrainer, MelodicMinorTrainer, AlteredTrainer, Triad
+Trainer). Single dev + end user: Zak.
 
 - Full build spec: `../CIRCLE-OF-FIFTHS-PLAN.md`.
 - Toolbox-wide conventions (git-dep workflow, multi-zone, single PWA,
