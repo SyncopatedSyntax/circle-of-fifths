@@ -87,3 +87,10 @@ Trainer). Single dev + end user: Zak.
   sharps/flats in a key, relative minor, name the key from its signature. Rounds
   are a fixed **10 questions** (`QUIZ_LENGTH`) with a progress bar and an
   **end screen** (score / %, message, Play again); switching mode restarts.
+
+## Audio
+iOS silent-switch bypass: the toolbox-standard **two-layer fix** (audioSession
+'playback' on iOS 16.4+, plus a looping silent `<audio>` fallback for older
+iOS) sits above `useAudio()`; `startSilentLoop()` is re-checked inside the
+hook's `ctx()` on every play. See root `CLAUDE.md → Audio`; reference
+implementation in `Chord-Trainer/App.jsx`. Don't regress to a fire-once MP3.
