@@ -65,6 +65,10 @@ Trainer). Single dev + end user: Zak.
   `cof_lock` (default off). The `Wheel` centre is only lockable when a `locked`
   prop is passed (Circle tab); the Learn-tab mini-wheel omits it and renders
   the plain centre.
+- **Tap flash:** every wedge tap briefly flashes (`.cof-flashpath`, ~340ms
+  fade) — bright light-amber if the chord is in the current key, dim muted grey
+  if it's outside it. Gives tactile feedback while locked (when highlights don't
+  move). Disabled under `prefers-reduced-motion`.
 
 ## Music facts — VERIFY before shipping (Zak's standard = exact correctness)
 - 12 keys clockwise `MAJ` = `C G D A E B F♯ D♭ A♭ E♭ B♭ F`. Relative minors `MIN` =
@@ -102,3 +106,13 @@ iOS silent-switch bypass: the toolbox-standard **two-layer fix** (audioSession
 iOS) sits above `useAudio()`; `startSilentLoop()` is re-checked inside the
 hook's `ctx()` on every play. See root `CLAUDE.md → Audio`; reference
 implementation in `Chord-Trainer/App.jsx`. Don't regress to a fire-once MP3.
+
+Also part of the toolbox audio standard (see root `CLAUDE.md → Audio`):
+- **Shared bus + limiter:** all voices run through one gain → `DynamicsCompressor`
+  → destination (`bus()`), so tapping fast (jamming) doesn't stack up and swell.
+- **Consistent tap level:** `chord()` plays the whole triad through one 0.2-peak
+  envelope (each note 1/n) — same loudness as the `sequence`/`loop` chords.
+  (It used to play each note as its own full-level voice → taps were ~3× louder.)
+- **Idle-suspend:** `bumpIdle()` suspends the context ~0.4s after the last sound
+  ends (re-armed on every play, incl. each loop pass) so iOS stops showing
+  "now playing"; `ctx()` resumes it on the next tap.

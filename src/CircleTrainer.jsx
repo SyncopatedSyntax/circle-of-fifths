@@ -83,15 +83,30 @@ function startSilentLoop() {
 }
 function useAudio() {
   const ref = useRef(null);
+  const busRef = useRef(null);
   const ctx = () => {
     startSilentLoop(); // re-checked every play: iOS pauses media on backgrounding
     if (!ref.current) ref.current = new (window.AudioContext || window.webkitAudioContext)();
     if (ref.current.state === "suspended") ref.current.resume();
     return ref.current;
   };
+  // Shared output bus: every voice runs through one gain → gentle limiter →
+  // destination. Keeps the level even whether you tap a single chord or jam a
+  // fast run of overlapping ones (their tails no longer stack up and swell).
+  const bus = (c) => {
+    if (!busRef.current || busRef.current.context !== c) {
+      const g = c.createGain(); g.gain.value = 1;
+      const comp = c.createDynamicsCompressor();
+      comp.threshold.value = -10; comp.knee.value = 20; comp.ratio.value = 4;
+      comp.attack.value = 0.003; comp.release.value = 0.25;
+      g.connect(comp); comp.connect(c.destination);
+      busRef.current = g;
+    }
+    return busRef.current;
+  };
   const voice = (c, freqs, t0, dur) => {
     const master = c.createGain();
-    master.connect(c.destination);
+    master.connect(bus(c));
     master.gain.setValueAtTime(0.0001, t0);
     master.gain.exponentialRampToValueAtTime(0.2, t0 + 0.02);
     master.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
@@ -102,7 +117,24 @@ function useAudio() {
     });
   };
   const loopRef = useRef(null);
+  const idleRef = useRef({ timer: null, end: 0 });
   const stopLoop = () => { if (loopRef.current) { loopRef.current.stop = true; loopRef.current = null; } };
+  // Release the audio session once nothing is sounding, so iOS stops showing
+  // "now playing" after the sound ends. Suspending deactivates the playback
+  // session; the ctx() getter resumes it on the next tap (the silent-switch
+  // bypass still applies while actually playing). Re-armed on every play —
+  // including each loop pass — so an active loop never suspends mid-play.
+  const bumpIdle = (c, end) => {
+    const r = idleRef.current;
+    r.end = Math.max(r.end, end);
+    if (r.timer) clearTimeout(r.timer);
+    r.timer = setTimeout(() => {
+      r.timer = null;
+      if (loopRef.current) return;               // a loop is still running
+      if (c.currentTime < r.end - 0.05) return;  // more sound is still scheduled
+      if (c.state === "running") c.suspend().catch(() => {});
+    }, Math.max(0, (r.end - c.currentTime) * 1000) + 400);
+  };
   const schedulePass = (c, items, t0, beat) => {
     let t = t0;
     items.forEach((it) => {
@@ -111,12 +143,26 @@ function useAudio() {
       voice(c, f, t + beat, beat * 1.9);
       t += beat * 2;
     });
+    bumpIdle(c, t);
     return t;
   };
   return {
     chord: (pc, q) => {
-      const c = ctx(), freqs = chordFreqs(pc, q), t0 = c.currentTime;
-      freqs.forEach((f, i) => voice(c, [f], t0 + i * 0.06, 1.2));
+      // One envelope for the whole triad (like the loop) so a tapped chord is
+      // the same loudness as a looped one — previously each note was its own
+      // full-level voice, making taps ~3x louder. Light arpeggio via staggered
+      // note starts.
+      const c = ctx(), freqs = chordFreqs(pc, q), t0 = c.currentTime + 0.02, dur = 1.3;
+      const master = c.createGain(); master.connect(bus(c));
+      master.gain.setValueAtTime(0.0001, t0);
+      master.gain.exponentialRampToValueAtTime(0.2, t0 + 0.03);
+      master.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      freqs.forEach((f, i) => {
+        const o = c.createOscillator(); o.type = "triangle"; o.frequency.value = f;
+        const g = c.createGain(); g.gain.value = 1 / freqs.length;
+        o.connect(g); g.connect(master); o.start(t0 + i * 0.05); o.stop(t0 + dur);
+      });
+      bumpIdle(c, t0 + dur);
     },
     sequence: (items, bpm) => { stopLoop(); const c = ctx(); schedulePass(c, items, c.currentTime + 0.05, 60 / bpm); },
     loop: (items, bpm, onStop) => {
@@ -137,10 +183,13 @@ function useAudio() {
 }
 
 // ── The wheel ────────────────────────────────────────────────────────────────
-function Wheel({ home, tg, locked }) {
+function Wheel({ home, tg, locked, flash }) {
   const chords = diatonic(home.ring, home.index);
   const cmap = {}; chords.forEach((ch) => { cmap[ch.ring + ch.index] = ch; });
   const homeId = (home.ring === "minor" ? "inner" : "outer") + home.index;
+  // A tapped wedge briefly flashes: bright (light amber) if it's in the current
+  // key, dim/muted if it's outside it.
+  const flashInKey = flash && (flash.id === homeId || !!cmap[flash.id]);
   const accSet = new Set(tg.sharps ? accidentalPositions(home.index).map((a) => "outer" + a.index) : []);
   return (
     <svg viewBox="0 0 360 360" role="img" aria-label={`Circle of fifths, home key ${keyName(home.ring, home.index)}`}>
@@ -156,6 +205,10 @@ function Wheel({ home, tg, locked }) {
         return (
           <g key={g.id} className="cof-slice" data-ring={g.ring} data-i={g.i}>
             <path d={g.path} fill={fill} stroke={SPOKE} strokeWidth="0.5" />
+            {flash && flash.id === g.id && (
+              <path key={flash.n} d={g.path} className={"cof-flashpath " + (flashInKey ? "in" : "out")}
+                style={{ fill: flashInKey ? "#ffe8cf" : "#7c7994" }} />
+            )}
             {g.ring === "outer" && accSet.has(g.id) && (
               <path d={g.path} fill="none" stroke={TEAL} strokeWidth="1.5" strokeDasharray="3 3" strokeLinejoin="round" />
             )}
@@ -209,6 +262,8 @@ const Toggle = ({ on, onClick, children }) => (
 // ── Circle tab ───────────────────────────────────────────────────────────────
 function CircleTab({ home, setHome, tg, setTg, audio, locked, setLocked }) {
   const chords = diatonic(home.ring, home.index);
+  const [flash, setFlash] = useState(null); // { id, n } — brief tap feedback on a wedge
+  const flashSeq = useRef(0);
   const pick = (ring, i) => {
     // Always play the tapped chord — even out-of-key wedges. Only move the home
     // key (and thus the highlights + numerals) when the wheel is unlocked.
@@ -224,9 +279,11 @@ function CircleTab({ home, setHome, tg, setTg, audio, locked, setLocked }) {
       </div>
       <div className="cof-wheelwrap" onClick={(e) => {
         if (e.target.closest(".cof-center")) { setLocked((l) => !l); return; }
-        const g = e.target.closest(".cof-slice"); if (g) pick(g.dataset.ring, +g.dataset.i);
+        const g = e.target.closest(".cof-slice"); if (!g) return;
+        setFlash({ id: g.dataset.ring + g.dataset.i, n: ++flashSeq.current });
+        pick(g.dataset.ring, +g.dataset.i);
       }}>
-        <Wheel home={home} tg={tg} locked={locked} />
+        <Wheel home={home} tg={tg} locked={locked} flash={flash} />
       </div>
       <div className="cof-readout">
         <div className="cof-readhead">
@@ -628,6 +685,12 @@ const STYLES = `
 .cof-center { cursor:pointer; }
 .cof-center text { pointer-events:none; user-select:none; }
 .cof-center:hover circle { filter:brightness(1.4); }
+.cof-flashpath { pointer-events:none; opacity:0; }
+.cof-flashpath.in { animation: cofFlashIn 340ms ease-out forwards; }
+.cof-flashpath.out { animation: cofFlashOut 380ms ease-out forwards; }
+@keyframes cofFlashIn { from { opacity:0.62; } to { opacity:0; } }
+@keyframes cofFlashOut { from { opacity:0.4; } to { opacity:0; } }
+@media (prefers-reduced-motion: reduce) { .cof-flashpath.in, .cof-flashpath.out { animation:none; } }
 .cof-readout { margin-top:20px; min-height:128px; text-align:center; }
 .cof-readhead { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:baseline; justify-content:center; }
 .cof-readhead strong { font:600 var(--fs-xl)/1 var(--font-display); color:var(--text-strong); }
