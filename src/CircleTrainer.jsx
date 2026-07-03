@@ -137,7 +137,7 @@ function useAudio() {
 }
 
 // ── The wheel ────────────────────────────────────────────────────────────────
-function Wheel({ home, tg }) {
+function Wheel({ home, tg, locked }) {
   const chords = diatonic(home.ring, home.index);
   const cmap = {}; chords.forEach((ch) => { cmap[ch.ring + ch.index] = ch; });
   const homeId = (home.ring === "minor" ? "inner" : "outer") + home.index;
@@ -171,11 +171,33 @@ function Wheel({ home, tg }) {
           </g>
         );
       })}
-      <circle cx="180" cy="180" r="46" fill="#141320" stroke="#2a2840" />
-      <text x="180" y="173" textAnchor="middle" dominantBaseline="central" fill="var(--text-strong)"
-        style={{ font: "800 30px var(--font-display)" }}>{home.ring === "minor" ? MIN_ROOT[home.index] : MAJ[home.index]}</text>
-      <text x="180" y="197" textAnchor="middle" dominantBaseline="central" fill={MUTED}
-        style={{ font: "600 10px var(--font-mono)", letterSpacing: "1.5px" }}>{home.ring === "minor" ? "MINOR" : "MAJOR"}</text>
+      {/* Centre: tap to lock/unlock the wheel (only wired up in the Circle tab,
+          where `locked` is defined). Locked = amber ring + inward glow + a small
+          LOCKED badge; the key letter + MAJOR/MINOR stay put (no reflow). */}
+      <g className={locked === undefined ? undefined : "cof-center"}
+        role={locked === undefined ? undefined : "button"} tabIndex={locked === undefined ? undefined : 0}
+        aria-label={locked === undefined ? undefined : (locked ? "Unlock the wheel" : "Lock the wheel to jam over this key")}>
+        <circle cx="180" cy="180" r="46" fill="#141320" stroke={locked ? AMBER : "#2a2840"} strokeWidth={locked ? 2 : 1} />
+        {locked && (
+          <>
+            <defs>
+              <radialGradient id="cofLockGlow" cx="0.5" cy="0.5" r="0.5">
+                <stop offset="76%" stopColor={AMBER} stopOpacity="0" />
+                <stop offset="100%" stopColor={AMBER} stopOpacity="0.26" />
+              </radialGradient>
+            </defs>
+            <circle cx="180" cy="180" r="45" fill="url(#cofLockGlow)" />
+          </>
+        )}
+        <text x="180" y="173" textAnchor="middle" dominantBaseline="central" fill="var(--text-strong)"
+          style={{ font: "800 30px var(--font-display)" }}>{home.ring === "minor" ? MIN_ROOT[home.index] : MAJ[home.index]}</text>
+        <text x="180" y="197" textAnchor="middle" dominantBaseline="central" fill={MUTED}
+          style={{ font: "600 10px var(--font-mono)", letterSpacing: "1.5px" }}>{home.ring === "minor" ? "MINOR" : "MAJOR"}</text>
+        {locked && (
+          <text x="180" y="212" textAnchor="middle" dominantBaseline="central" fill={AMBER}
+            style={{ font: "700 6.5px var(--font-heading)", letterSpacing: "1.2px" }}>🔒 LOCKED</text>
+        )}
+      </g>
     </svg>
   );
 }
@@ -185,12 +207,13 @@ const Toggle = ({ on, onClick, children }) => (
 );
 
 // ── Circle tab ───────────────────────────────────────────────────────────────
-function CircleTab({ home, setHome, tg, setTg, audio }) {
+function CircleTab({ home, setHome, tg, setTg, audio, locked, setLocked }) {
   const chords = diatonic(home.ring, home.index);
   const pick = (ring, i) => {
-    const hr = ring === "outer" ? "major" : "minor";
-    setHome({ ring: hr, index: i });
+    // Always play the tapped chord — even out-of-key wedges. Only move the home
+    // key (and thus the highlights + numerals) when the wheel is unlocked.
     audio.chord(ring === "outer" ? MAJ_PC[i] : MIN_PC[i], ring === "outer" ? "maj" : "min");
+    if (!locked) setHome({ ring: ring === "outer" ? "major" : "minor", index: i });
   };
   return (
     <div className="cof-pad">
@@ -200,9 +223,10 @@ function CircleTab({ home, setHome, tg, setTg, audio }) {
         <Toggle on={tg.sharps} onClick={() => setTg((t) => ({ ...t, sharps: !t.sharps }))}>♯ / ♭</Toggle>
       </div>
       <div className="cof-wheelwrap" onClick={(e) => {
+        if (e.target.closest(".cof-center")) { setLocked((l) => !l); return; }
         const g = e.target.closest(".cof-slice"); if (g) pick(g.dataset.ring, +g.dataset.i);
       }}>
-        <Wheel home={home} tg={tg} />
+        <Wheel home={home} tg={tg} locked={locked} />
       </div>
       <div className="cof-readout">
         <div className="cof-readhead">
@@ -219,7 +243,9 @@ function CircleTab({ home, setHome, tg, setTg, audio }) {
           </div>
         )}
         {tg.sharps && <div className="cof-legend"><span className="cof-dash" /> note that gets ♯/♭ in this key</div>}
-        <div className="cof-hint">Tap a wedge to set its key and hear it · outer ring = major, inner = relative minor.</div>
+        <div className="cof-hint">{locked
+          ? "🔒 Key locked — tap wedges to hear chords without changing the key. Tap the centre to unlock."
+          : "Tap a wedge to set its key and hear it. Tap the centre to lock the key and jam over its chords."}</div>
       </div>
     </div>
   );
@@ -562,9 +588,11 @@ export default function App() {
   const [tab, setTab] = useState("circle");
   const [home, setHome] = useState(() => store.get("cof_home", { ring: "major", index: 0 }));
   const [tg, setTg] = useState(() => store.get("cof_tg", { chords: true, numbers: false, sharps: false }));
+  const [locked, setLocked] = useState(() => store.get("cof_lock", false));
   const audio = useAudio();
   useEffect(() => store.set("cof_home", home), [home]);
   useEffect(() => store.set("cof_tg", tg), [tg]);
+  useEffect(() => store.set("cof_lock", locked), [locked]);
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
@@ -574,7 +602,7 @@ export default function App() {
       <TabBar toolKey="circle" accent={AMBER} tabs={TABS} active={tab} onChange={setTab} />
       <main className="fw-app-shell">
         {tab === "learn" && <LearnTab home={home} setHome={setHome} audio={audio} />}
-        {tab === "circle" && <CircleTab home={home} setHome={setHome} tg={tg} setTg={setTg} audio={audio} />}
+        {tab === "circle" && <CircleTab home={home} setHome={setHome} tg={tg} setTg={setTg} audio={audio} locked={locked} setLocked={setLocked} />}
         {tab === "write" && <WriteTab home={home} setHome={setHome} audio={audio} />}
         {tab === "quiz" && <QuizTab />}
       </main>
@@ -597,6 +625,9 @@ const STYLES = `
 .cof-slice { cursor:pointer; }
 .cof-slice text { pointer-events:none; user-select:none; }
 .cof-slice:hover path { filter:brightness(1.18); }
+.cof-center { cursor:pointer; }
+.cof-center text { pointer-events:none; user-select:none; }
+.cof-center:hover circle { filter:brightness(1.4); }
 .cof-readout { margin-top:20px; min-height:128px; text-align:center; }
 .cof-readhead { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:baseline; justify-content:center; }
 .cof-readhead strong { font:600 var(--fs-xl)/1 var(--font-display); color:var(--text-strong); }

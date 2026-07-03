@@ -57,6 +57,14 @@ Trainer). Single dev + end user: Zak.
 - **Geometry** (viewBox `0 0 360 360`, centre 180,180): outer ring r 113–179 (name
   r≈146 centred / 154 nudged, numeral r≈121, divider r≈131); inner ring r 47–109
   (name r≈78/87, numeral r≈57, divider r≈66); centre hole r<47 for the key label.
+- **Lock (Circle tab only):** tap the **centre** (the key label) to lock/unlock
+  the wheel. Locked = amber ring + subtle inward glow + a small `🔒 LOCKED`
+  badge; the key letter + MAJOR/MINOR stay put (no reflow). While locked,
+  tapping a wedge **plays its chord** (in-key or not) but does **not** change
+  the home key — so highlights + numerals hold while you jam. State persists as
+  `cof_lock` (default off). The `Wheel` centre is only lockable when a `locked`
+  prop is passed (Circle tab); the Learn-tab mini-wheel omits it and renders
+  the plain centre.
 
 ## Music facts — VERIFY before shipping (Zak's standard = exact correctness)
 - 12 keys clockwise `MAJ` = `C G D A E B F♯ D♭ A♭ E♭ B♭ F`. Relative minors `MIN` =
