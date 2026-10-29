@@ -11,7 +11,6 @@ let pass = 0, fail = 0;
 const ok = (cond, msg) => { cond ? pass++ : (fail++, console.error("  ✗ " + msg)); };
 const eq = (a, b, msg) => ok(JSON.stringify(a) === JSON.stringify(b), `${msg} — got ${JSON.stringify(a)}, want ${JSON.stringify(b)}`);
 
-const PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
 const MINOR_STEPS = [0, 2, 3, 5, 7, 8, 10];
 const MAJOR_Q = ["maj", "min", "min", "maj", "maj", "min", "dim"];

@@ -1,11 +1,10 @@
 // Circle of Fifths Trainer — single-file React app. Pure theory + songwriting.
 // All music data comes from ./theory.js (Node-verified). Shared chrome from
 // @fretworks/design. Design choices locked in CLAUDE.md (mockup v6).
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppHeader, TabBar } from "@fretworks/design";
 import {
-  MAJ, MIN, MIN_ROOT, MAJ_PC, MIN_PC, SIGNATURE, SHARP_ORDER, FLAT_ORDER,
-  diatonic, diatonicMajor, accidentalPositions, keyName, signatureText, chordFreqs,
+  MAJ, MIN, MIN_ROOT, MAJ_PC, MIN_PC, SIGNATURE, diatonic, diatonicMajor, accidentalPositions, keyName, signatureText, chordFreqs,
 } from "./theory.js";
 
 // ── Palette (locked v6) ──────────────────────────────────────────────────────
