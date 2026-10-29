@@ -1,0 +1,29 @@
+{
+  "id": "/circle/",
+  "name": "Circle of Fifths Trainer",
+  "short_name": "Circle 5ths",
+  "description": "See how keys, chords and sharps/flats connect — then use the circle to write progressions that work.",
+  "start_url": "/circle/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f0e17",
+  "theme_color": "#0f0e17",
+  "icons": [
+    {
+      "src": "/circle/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/circle/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/circle/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
